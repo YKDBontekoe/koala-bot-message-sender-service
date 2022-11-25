@@ -2,39 +2,35 @@
 using Discord;
 using Discord.WebSocket;
 using Koala.MessageSenderService.Models;
+using Koala.MessageSenderService.Options;
 using Koala.MessageSenderService.Services.Interfaces;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
 namespace Koala.MessageSenderService.Services;
 
 public class MessageService : IMessageService
 {
-    private readonly BaseSocketClient _discordClient;
-    private readonly ServiceBusClient _serviceBusClient;
-    private readonly IConfiguration _configuration;
-    private ServiceBusProcessor? _processor;
+    private readonly DiscordSocketClient _discordClient;
+    private readonly ServiceBusProcessor? _processor;
+    private readonly DiscordOptions _discordOptions;
 
-    public MessageService(BaseSocketClient discordClient, ServiceBusClient serviceBusClient, IConfiguration configuration)
+    public MessageService(DiscordSocketClient discordClient, ServiceBusClient serviceBusClient, IOptions<ServiceBusOptions> serviceBusOptions, IOptions<DiscordOptions> discordOptions)
     {
         _discordClient = discordClient;
-        _serviceBusClient = serviceBusClient;
-        _configuration = configuration;
+        _discordOptions = discordOptions != null ? discordOptions.Value : throw new ArgumentNullException(nameof(discordOptions));
+        _processor = serviceBusClient.CreateProcessor(serviceBusOptions.Value.QueueName, new ServiceBusProcessorOptions());
+        
+        InitializeDiscordClient();
     }
 
     public async Task InitializeAsync()
     {
-        _processor = _serviceBusClient.CreateProcessor(_configuration["ServiceBus:QueueName"], new ServiceBusProcessorOptions
-        {
-            AutoCompleteMessages = true,
-            MaxAutoLockRenewalDuration = TimeSpan.FromMinutes(15),
-            PrefetchCount = 100,
-        });
-        
         try
         {
             // add handler to process messages
-            _processor.ProcessMessageAsync += MessagesHandler;
+            _processor!.ProcessMessageAsync += MessagesHandler;
 
             // add handler to process any errors
             _processor.ProcessErrorAsync += ErrorHandler;
@@ -75,10 +71,17 @@ public class MessageService : IMessageService
         await channel.SendMessageAsync(message.Content);
     }
     
-    private Task ErrorHandler(ProcessErrorEventArgs args)
+    private static Task ErrorHandler(ProcessErrorEventArgs args)
     {
         // Process the error.
         Console.WriteLine(args.Exception.ToString());
         return Task.CompletedTask;
+    }
+    
+    // Initialize the Discord client and connect to the gateway
+    private void InitializeDiscordClient()
+    {
+        _discordClient.LoginAsync(TokenType.Bot, _discordOptions.Token);
+        _discordClient.StartAsync();
     }
 }
