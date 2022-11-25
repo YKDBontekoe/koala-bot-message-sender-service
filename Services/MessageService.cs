@@ -20,7 +20,12 @@ public class MessageService : IMessageService
     {
         _discordClient = discordClient;
         _discordOptions = discordOptions != null ? discordOptions.Value : throw new ArgumentNullException(nameof(discordOptions));
-        _processor = serviceBusClient.CreateProcessor(serviceBusOptions.Value.QueueName, new ServiceBusProcessorOptions());
+        _processor = serviceBusClient.CreateProcessor(serviceBusOptions.Value.QueueName, new ServiceBusProcessorOptions
+        {
+            AutoCompleteMessages = true,
+            MaxAutoLockRenewalDuration = TimeSpan.FromMinutes(15),
+            PrefetchCount = 100,
+        });
         
         InitializeDiscordClient();
     }
