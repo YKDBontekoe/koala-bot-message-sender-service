@@ -1,0 +1,9 @@
+﻿version: '3.8'
+services:
+  koala-command-handler:
+    image: koala-messaging-sender
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - DOTNET_ENVIRONMENT=Development
