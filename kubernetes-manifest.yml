@@ -21,6 +21,13 @@ spec:
           containers:
           - name: koala-message-sender-service
             image: ykdbonteregistry.azurecr.io/koala-message-sender-service:v1
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 1000m
+                memory: 200Mi
             imagePullPolicy: Always
             ports:
               - containerPort: 5001
