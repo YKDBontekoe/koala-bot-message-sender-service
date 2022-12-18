@@ -20,17 +20,19 @@ spec:
           restartPolicy: Always
           containers:
           - name: koala-message-sender-service
-            image: ykdbonteregistry.azurecr.io/koala-message-sender-service:v1
+            image: ykdbonteregistry.azurecr.io/koala-message-sender-service:latest
             resources:
               requests:
-                cpu: 100m
-                memory: 128Mi
+                cpu: 500m
+                memory: 256Mi
               limits:
                 cpu: 1000m
-                memory: 200Mi
+                memory: 500Mi
             imagePullPolicy: Always
             ports:
               - containerPort: 5001
             env:
               - name: DOTNET_ENVIRONMENT
                 value: "Production"
+          imagePullSecrets:
+          - name: ykdbonteregistry
