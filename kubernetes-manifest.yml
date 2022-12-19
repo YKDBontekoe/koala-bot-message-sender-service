@@ -23,7 +23,7 @@ spec:
             image: ykdbonteregistry.azurecr.io/koala-message-sender-service:latest
             resources:
               limits:
-                cpu: 1000m
+                cpu: 100m
                 memory: 500Mi
             imagePullPolicy: Always
             ports:
